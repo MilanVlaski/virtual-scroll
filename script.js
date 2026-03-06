@@ -5,122 +5,101 @@ const elementCountDisplay = document.getElementById('element-count');
 
 const ITEM_HEIGHT = 80;
 const TOTAL_ITEMS = 10000;
-const POOL_SIZE = 13; // Elements 0 to 12
+const BUFFER = 5;
+
+// Initial calculation of pool size based on viewport
+const VISIBLE_COUNT = Math.ceil(container.clientHeight / ITEM_HEIGHT);
+const POOL_SIZE = VISIBLE_COUNT + (BUFFER * 2);
 
 const pool = [];
-let firstIndex = 0; // The index of the first item in the pool range
+let currentMin = 0;
+let currentMax = POOL_SIZE - 1;
 
-function createItem(index) {
-    const el = document.createElement('div');
-    el.className = 'list-item';
-    el.style.transform = `translateY(${index * ITEM_HEIGHT}px)`;
-    updateItemContent(el, index);
-    itemsContainer.appendChild(el);
-    return { el, index };
-}
-
+/**
+ * Updates an item's content and position.
+ * Fix #4: Uses cached DOM references instead of querySelector.
+ */
 function updateItemContent(el, index) {
-    el.querySelector('.item-index').textContent = index;
-    el.querySelector('.item-title').textContent = `Product #${index + 1}`;
-    el.querySelector('.item-subtitle').textContent = `High-performance virtual entry ${index * 7}ms offset`;
     el.dataset.index = index;
+    el.style.transform = `translateY(${index * ITEM_HEIGHT}px)`;
+
+    el._indexEl.textContent = index;
+    el._titleEl.textContent = `Product #${index + 1}`;
+    el._subtitleEl.textContent = `High-performance virtual entry ${index * 7}ms offset`;
 }
 
-// Initialize pool with 13 elements
+// Initialize pool (Fix #4: Cache child references on the element)
 for (let i = 0; i < POOL_SIZE; i++) {
     const itemEl = document.createElement('div');
     itemEl.className = 'list-item';
     itemEl.innerHTML = `
-        <div class="item-index">${i}</div>
+        <div class="item-index"></div>
         <div class="item-content">
-            <div class="item-title">Product #${i + 1}</div>
-            <div class="item-subtitle">High-performance virtual entry ${i * 7}ms offset</div>
+            <div class="item-title"></div>
+            <div class="item-subtitle"></div>
         </div>
     `;
-    itemEl.style.transform = `translateY(${i * ITEM_HEIGHT}px)`;
-    itemEl.dataset.index = i;
+
+    // Store references to avoid expensive DOM lookups later
+    itemEl._indexEl = itemEl.querySelector('.item-index');
+    itemEl._titleEl = itemEl.querySelector('.item-title');
+    itemEl._subtitleEl = itemEl.querySelector('.item-subtitle');
+
+    updateItemContent(itemEl, i);
     itemsContainer.appendChild(itemEl);
     pool.push(itemEl);
 }
 
 elementCountDisplay.textContent = pool.length;
 
-// Intersection Observer Setup
-const observerOptions = {
-    root: container,
-    threshold: 0
-};
-
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (!entry.isIntersecting) {
-            recycleElement(entry.target);
-        }
-    });
-}, observerOptions);
-
-pool.forEach(el => observer.observe(el));
-
-function recycleElement(el) {
-    const currentIndex = parseInt(el.dataset.index);
+/**
+ * Core scrolling logic.
+ * Fix #1: Tracks min/max indices in variables to avoid O(n) Math.max.
+ * Fix #2: Pure math for recycling to avoid layout thrashing (getBoundingClientRect).
+ * Fix #3: Uses a buffer (BUFFER items above/below) for smoothness.
+ */
+function handleScroll() {
     const scrollTop = container.scrollTop;
 
-    // Determine if it exited from top or bottom
-    const rect = el.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
+    // Determine the ideal starting index for the pool (viewport start - buffer)
+    const targetStart = Math.max(0, Math.floor(scrollTop / ITEM_HEIGHT) - BUFFER);
+    const targetEnd = Math.min(TOTAL_ITEMS - 1, targetStart + POOL_SIZE - 1);
 
-    let newIndex;
+    // Performance optimization: Skip if we are still within the same range
+    if (targetStart === currentMin) return;
 
-    if (rect.bottom < containerRect.top) {
-        // Exited top: move to bottom of the current pool range
-        // Find the maximum index currently in the pool
-        const maxIndex = Math.max(...pool.map(e => parseInt(e.dataset.index)));
-        newIndex = maxIndex + 1;
-    } else if (rect.top > containerRect.bottom) {
-        // Exited bottom: move to top of the current pool range
-        const minIndex = Math.min(...pool.map(e => parseInt(e.dataset.index)));
-        newIndex = minIndex - 1;
+    // Check if we jumped completely outside the current range
+    if (targetStart > currentMax || targetEnd < currentMin) {
+        // Full reset
+        for (let i = 0; i < POOL_SIZE; i++) {
+            updateItemContent(pool[i], targetStart + i);
+        }
     } else {
-        return; // Still visible or edge case
-    }
-
-    if (newIndex >= 0 && newIndex < TOTAL_ITEMS) {
-        el.dataset.index = newIndex;
-        el.style.transform = `translateY(${newIndex * ITEM_HEIGHT}px)`;
-        updateItemContent(el, newIndex);
-    }
-}
-
-// Jump detection and pool reset
-function resetPool() {
-    const scrollTop = container.scrollTop;
-    const startIndex = Math.floor(scrollTop / ITEM_HEIGHT);
-
-    pool.forEach((el, i) => {
-        const newIndex = startIndex + i;
-        if (newIndex < TOTAL_ITEMS) {
-            el.dataset.index = newIndex;
-            el.style.transform = `translateY(${newIndex * ITEM_HEIGHT}px)`;
-            updateItemContent(el, newIndex);
+        // Sliding window approach: Recycle items from one end to the other
+        while (currentMin < targetStart) {
+            // Recycled items move from top to bottom
+            const el = pool.shift();
+            pool.push(el);
+            currentMin++;
+            currentMax++;
+            updateItemContent(el, currentMax);
         }
-    });
-}
-
-function checkJump() {
-    const scrollTop = container.scrollTop;
-    const minVisibleIndex = Math.min(...pool.map(e => parseInt(e.dataset.index)));
-    const maxVisibleIndex = Math.max(...pool.map(e => parseInt(e.dataset.index)));
-
-    const viewportStart = Math.floor(scrollTop / ITEM_HEIGHT);
-    const viewportEnd = Math.ceil((scrollTop + container.clientHeight) / ITEM_HEIGHT);
-
-    // If the gap between pool and viewport is too large, reset
-    if (viewportStart > maxVisibleIndex + 5 || viewportEnd < minVisibleIndex - 5) {
-        resetPool();
+        while (currentMin > targetStart) {
+            // Recycled items move from bottom to top
+            const el = pool.pop();
+            pool.unshift(el);
+            currentMin--;
+            currentMax--;
+            updateItemContent(el, currentMin);
+        }
     }
+
+    // Update local state for next scroll event
+    currentMin = targetStart;
+    currentMax = targetEnd;
 }
 
-// Debounce helper
+// Debounce helper for non-critical performance stats
 function debounce(func, wait) {
     let timeout;
     return function (...args) {
@@ -139,7 +118,7 @@ container.addEventListener('scroll', () => {
 
     if (!ticking) {
         window.requestAnimationFrame(() => {
-            checkJump();
+            handleScroll();
             ticking = false;
         });
         ticking = true;
