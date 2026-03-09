@@ -3,6 +3,11 @@ Dependencies:
 HTML: elements with id scroll-container, list-items-container, scroll-y
 CSS: --item-height
 
+Initial calculation of pool size based on viewport
+TODO might have to make it let. ResizeObserver.
+Function that ultimately recalculates POOL_SIZE, rerendering as well.
+
+Future functions: state of elements (read, restore e.g., for the sake of checkbox state). Create element. Update element.
 */
 
 const container = document.getElementById('scroll-container')
@@ -10,11 +15,13 @@ const itemsContainer = document.getElementById('list-items-container')
 const scrollYDisplay = document.getElementById('scroll-y')
 const elementCountDisplay = document.getElementById('element-count')
 
-const ITEM_HEIGHT = 80
-const TOTAL_ITEMS = 10000000
-const BUFFER = 5
 
-// Initial calculation of pool size based on viewport
+const ITEM_HEIGHT = parseInt(getComputedStyle(document.documentElement)
+    .getPropertyValue('--item-height'))
+const TOTAL_ITEMS = 10000
+const BUFFER = 0
+
+
 const VISIBLE_COUNT = Math.ceil(container.clientHeight / ITEM_HEIGHT)
 const POOL_SIZE = VISIBLE_COUNT + (BUFFER * 2)
 
@@ -22,6 +29,19 @@ const pool = []
 let currentMin = 0
 let currentMax = POOL_SIZE - 1
 let poolStart = 0
+
+const resizeObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+        if (entry.contentBoxSize) {
+            console.log(`My entry:`, entry.contentBoxSize)
+
+        }
+    }
+
+    console.log("Size changed")
+})
+
+resizeObserver.observe(container)
 
 // Initialize pool (Fix #4: Cache child references on the element)
 for (let i = 0; i < POOL_SIZE; i++) {
