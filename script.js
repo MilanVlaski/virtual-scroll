@@ -10,6 +10,7 @@ Function that ultimately recalculates POOL_SIZE, rerendering as well.
 Future functions: state of elements (read, restore e.g., for the sake of checkbox state). Create element. Update element.
 */
 
+// Pass in these elements to class, or something.
 const container = document.getElementById('scroll-container')
 const itemsContainer = document.getElementById('list-items-container')
 const scrollYDisplay = document.getElementById('scroll-y')
@@ -22,29 +23,44 @@ const TOTAL_ITEMS = 10000
 const BUFFER = 0
 
 
-const VISIBLE_COUNT = Math.ceil(container.clientHeight / ITEM_HEIGHT)
-const POOL_SIZE = VISIBLE_COUNT + (BUFFER * 2)
+let VISIBLE_COUNT
+let POOL_SIZE
 
 const pool = []
-let currentMin = 0
-let currentMax = POOL_SIZE - 1
-let poolStart = 0
+let currentMin
+let currentMax
+let poolStart
 
-const resizeObserver = new ResizeObserver((entries) => {
-    for (const entry of entries) {
-        if (entry.contentBoxSize) {
-            console.log(`My entry:`, entry.contentBoxSize)
+function initialize() {
+    console.log('redrawn')
+    pool.length = 0;
 
-        }
-    }
+    VISIBLE_COUNT = Math.ceil(container.clientHeight / ITEM_HEIGHT);
+    POOL_SIZE = VISIBLE_COUNT + (BUFFER * 2);
 
-    console.log("Size changed")
+    currentMin = 0;
+    currentMax = POOL_SIZE - 1;
+    poolStart = 0;
+
+    initializeItems()
+    updateCount()
+    handleScroll()
+}
+
+const debouncedResize = debounce(() => {
+    itemsContainer.innerHTML = '';
+    initialize()
+}, 150)
+
+const resizeObserver = new ResizeObserver(() => {
+    // We COULD check for height changes, because we don't care about width changing
+    // But it happens so rarely that it's better not to write the code.
+    debouncedResize()
 })
 
 resizeObserver.observe(container)
 
-// Initialize pool
-function initializePool() {
+function initializeItems() {
     for (let i = 0; i < POOL_SIZE; i++) {
         const itemEl = createItem()
         updateItemContent(itemEl, i)
@@ -78,8 +94,10 @@ function updateItemContent(el, index) {
     el._subtitleEl.textContent = `High-performance virtual entry ${index * 7}ms offset`
 }
 
-initializePool()
-elementCountDisplay.textContent = pool.length
+// TODO this is a kind of "state", that should be exposed to the outside
+function updateCount() {
+    elementCountDisplay.textContent = pool.length
+}
 // --- Initial --- //
 
 let ticking = false
@@ -160,3 +178,6 @@ function handleScroll() {
     currentMin = targetStart
     currentMax = targetEnd
 }
+
+// Run
+initialize()
