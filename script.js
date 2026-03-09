@@ -10,10 +10,12 @@ Function that ultimately recalculates POOL_SIZE, rerendering as well.
 Future functions: state of elements (read, restore e.g., for the sake of checkbox state). Create element. Update element.
 */
 
-// Pass in these elements to class, or something.
+// TODO Pass in these elements to class, or something.
 const container = document.getElementById('scroll-container')
 const itemsContainer = document.getElementById('list-items-container')
 const scrollYDisplay = document.getElementById('scroll-y')
+
+// Except you :P
 const elementCountDisplay = document.getElementById('element-count')
 
 
@@ -31,6 +33,8 @@ let currentMin
 let currentMax
 let poolStart
 
+
+// Constructor in future class?
 function initialize() {
     console.log('redrawn')
     pool.length = 0;
@@ -43,7 +47,7 @@ function initialize() {
     poolStart = 0;
 
     initializeItems()
-    updateCount()
+    updateItemCount()
     handleScroll()
 }
 
@@ -57,7 +61,6 @@ const resizeObserver = new ResizeObserver(() => {
     // But it happens so rarely that it's better not to write the code.
     debouncedResize()
 })
-
 resizeObserver.observe(container)
 
 function initializeItems() {
@@ -69,6 +72,7 @@ function initializeItems() {
     }
 }
 
+// Callback
 function createItem() {
     const itemEl = document.createElement('div')
     itemEl.className = 'list-item'
@@ -85,6 +89,7 @@ function createItem() {
     return itemEl
 }
 
+// Callback
 function updateItemContent(el, index) {
     el.dataset.index = index
     el.style.transform = `translateY(${index * ITEM_HEIGHT}px)`
@@ -95,7 +100,7 @@ function updateItemContent(el, index) {
 }
 
 // TODO this is a kind of "state", that should be exposed to the outside
-function updateCount() {
+function updateItemCount() {
     elementCountDisplay.textContent = pool.length
 }
 // --- Initial --- //
