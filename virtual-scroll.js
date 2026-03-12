@@ -6,9 +6,9 @@ export class VirtualScroll {
     constructor(config) {
         this.container = config.container
         this.itemsContainer = config.itemsContainer
-        this.itemHeight = config.itemHeight
-        this.totalItems = config.totalItems
-        this.buffer = config.buffer || 0
+        this._itemHeight = config.itemHeight
+        this._totalItems = config.totalItems
+        this._buffer = config.buffer || 0
         this.createItem = config.createItem
         this.updateItemContent = config.updateItemContent
         this.onScroll = config.onScroll
@@ -19,11 +19,7 @@ export class VirtualScroll {
         this.currentMax = 0
         this.poolStart = 0
         this.visibleCount = 0
-        this.poolSize = 0
-
-        this.ticking = false
-
-        this.setupEventListeners()
+        this._poolSize = 0
     }
 
     /**
@@ -33,90 +29,61 @@ export class VirtualScroll {
         this.pool.length = 0
         this.itemsContainer.innerHTML = ''
 
-        this.visibleCount = Math.ceil(this.container.clientHeight / this.itemHeight)
-        this.poolSize = this.visibleCount + (this.buffer * 2)
+        this.visibleCount = Math.ceil(this.container.clientHeight / this._itemHeight)
+        this._poolSize = this.visibleCount + (this._buffer * 2)
 
         this.currentMin = 0
-        this.currentMax = this.poolSize - 1
+        this.currentMax = this._poolSize - 1
         this.poolStart = 0
 
         this.initializeItems()
-        if (this.onPoolUpdate) this.onPoolUpdate(this.pool.length)
-        this.handleScroll()
+        // Set initial visible range to show items at the start
+        this.updateVisibleRange(0, this._poolSize - 1)
     }
 
     /**
      * Populates the pool with initial items.
      */
     initializeItems() {
-        for (let i = 0; i < this.poolSize; i++) {
+        for (let i = 0; i < this._poolSize; i++) {
             const itemEl = this.createItem()
-            this.updateItemContent(itemEl, i, this.itemHeight)
+            this.updateItemContent(itemEl, i, this._itemHeight)
             this.itemsContainer.appendChild(itemEl)
             this.pool.push(itemEl)
         }
     }
 
     /**
-     * Sets up scroll and resize listeners.
-     */
-    setupEventListeners() {
-        this.container.addEventListener('scroll', () => {
-            if (this.onScroll) this.onScroll(this.container.scrollTop)
-
-            if (!this.ticking) {
-                window.requestAnimationFrame(() => {
-                    this.handleScroll()
-                    this.ticking = false
-                })
-                this.ticking = true
-            }
-        })
-
-        const debouncedResize = this.debounce(() => {
-            console.log('Resize detected, re-initializing pool...')
-            this.initialize()
-        }, 150)
-
-        this.resizeObserver = new ResizeObserver(() => {
-            debouncedResize()
-        })
-        this.resizeObserver.observe(this.container)
-    }
-
-    /**
      * Core recycling logic. Determines which items should be visible
      * and moves elements from the pool to their new positions.
+     * @param {number} targetStart - The first visible item index
+     * @param {number} targetEnd - The last visible item index
      */
-    handleScroll() {
-        const scrollTop = this.container.scrollTop
-        const targetStart = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.buffer)
-        const targetEnd = Math.min(this.totalItems - 1, targetStart + this.poolSize - 1)
-
+    updateVisibleRange(targetStart, targetEnd) {
         if (targetStart === this.currentMin) return
 
         // If we jumped completely outside the current range
         if (targetStart > this.currentMax || targetEnd < this.currentMin) {
-            for (let i = 0; i < this.poolSize; i++) {
-                const el = this.pool[(this.poolStart + i) % this.poolSize]
-                this.updateItemContent(el, targetStart + i, this.itemHeight)
+            for (let i = 0; i < this._poolSize; i++) {
+                const el = this.pool[(this.poolStart + i) % this._poolSize]
+                this.updateItemContent(el, targetStart + i, this._itemHeight)
             }
         } else {
             // Sliding window approach
             while (this.currentMin < targetStart) {
                 const el = this.pool[this.poolStart]
-                this.poolStart = (this.poolStart + 1) % this.poolSize
+                this.poolStart = (this.poolStart + 1) % this._poolSize
                 this.currentMin++
                 this.currentMax++
-                this.updateItemContent(el, this.currentMax, this.itemHeight)
+                this.updateItemContent(el, this.currentMax, this._itemHeight)
             }
 
             while (this.currentMin > targetStart) {
-                this.poolStart = (this.poolStart - 1 + this.poolSize) % this.poolSize
+                this.poolStart = (this.poolStart - 1 + this._poolSize) % this._poolSize
                 const el = this.pool[this.poolStart]
                 this.currentMin--
                 this.currentMax--
-                this.updateItemContent(el, this.currentMin, this.itemHeight)
+                this.updateItemContent(el, this.currentMin, this._itemHeight)
             }
         }
 
@@ -124,11 +91,23 @@ export class VirtualScroll {
         this.currentMax = targetEnd
     }
 
-    debounce(func, wait) {
-        let timeout
-        return (...args) => {
-            clearTimeout(timeout)
-            timeout = setTimeout(() => func.apply(this, args), wait)
-        }
+    getPoolSize() {
+        return this.pool.length
+    }
+
+    get itemHeight() {
+        return this._itemHeight
+    }
+
+    get buffer() {
+        return this._buffer
+    }
+
+    get poolSize() {
+        return this._poolSize
+    }
+
+    get totalItems() {
+        return this._totalItems
     }
 }
