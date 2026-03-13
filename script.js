@@ -1,4 +1,5 @@
-import { VirtualScroll } from './virtual-scroll.js';
+import { VirtualScroll } from './virtual-scroll.js'
+import { VirtualScrollController } from './virtual-scroll-controller.js'
 
 // --- Usage --- //
 
@@ -36,7 +37,7 @@ function updateItemContent(el, index, itemHeight) {
     el._subtitleEl.textContent = `High-performance virtual entry ${index * 7}ms offset`
 }
 
-// Instantiate the virtual scroll
+// Create virtual scroll without event handling - pure pool manager
 const vs = new VirtualScroll({
     container,
     itemsContainer,
@@ -44,7 +45,13 @@ const vs = new VirtualScroll({
     totalItems: TOTAL_ITEMS,
     buffer: 0,
     createItem,
-    updateItemContent,
+    updateItemContent
+})
+
+// Wrap with controller that handles events
+const controller = new VirtualScrollController({
+    virtualScroll: vs,
+    container,
     onScroll: (scrollTop) => {
         scrollYDisplay.textContent = Math.floor(scrollTop)
     },
@@ -53,5 +60,5 @@ const vs = new VirtualScroll({
     }
 })
 
-vs.initialize()
+controller.start()
 
