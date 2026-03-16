@@ -15,8 +15,10 @@ export class VirtualScroll {
         this.onPoolUpdate = config.onPoolUpdate
 
         this.pool = []
+        // Our circular buffer index
         this.currentMin = 0
         this.currentMax = 0
+
         this.poolStart = 0
         this.visibleCount = 0
         this.poolSize = 0
@@ -119,9 +121,6 @@ export class VirtualScroll {
                 this.updateItemContent(el, this.currentMin, this.itemHeight)
             }
         }
-
-        this.currentMin = targetStart
-        this.currentMax = targetEnd
     }
 
     debounce(func, wait) {
@@ -131,4 +130,6 @@ export class VirtualScroll {
             timeout = setTimeout(() => func.apply(this, args), wait)
         }
     }
+
+
 }
