@@ -49,9 +49,6 @@ const vs = new VirtualScroll({
     buffer: 0,
     createItem,
     updateItemContent,
-    onPoolUpdate: (poolSize) => {
-        // elementCountDisplay.textContent = poolSize
-    }
 })
 
 const controller = new ScrollController(

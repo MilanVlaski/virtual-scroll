@@ -37,7 +37,6 @@ export class VirtualScroll {
         this.currentStart = 0
 
         this.initializeItems()
-        if (this.onPoolUpdate) this.onPoolUpdate(this.pool.length)
         this.handleScroll()
     }
 
