@@ -39,7 +39,6 @@ export class VirtualScroll {
         const visibleCount = Math.ceil(containerHeight / this.itemHeight)
         this.poolSize = visibleCount + (this.buffer * 2)
 
-        this.currentMin = 0
         this.poolStart = 0
 
         this.currentStart = 0
