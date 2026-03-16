@@ -20,7 +20,7 @@ export class VirtualScroll {
         this.poolSize = 0
 
         // Our elements index
-        this.startIndex = 0
+        this.currentStart = 0
 
 
         this.ticking = false
@@ -43,7 +43,7 @@ export class VirtualScroll {
         this.currentMin = 0
         this.poolStart = 0
 
-        this.startIndex = 0
+        this.currentStart = 0
 
         this.initializeItems()
         if (this.onPoolUpdate) this.onPoolUpdate(this.pool.length)
@@ -98,31 +98,32 @@ export class VirtualScroll {
         const targetStart = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.buffer)
         const targetEnd = Math.min(this.totalItems - 1, targetStart + this.poolSize - 1)
 
-        if (targetStart === this.startIndex) return
+        if (targetStart === this.currentStart) return
 
         // If we jumped completely outside the current range
-        if (targetStart > this.endIndex || targetEnd < this.startIndex) {
+        if (targetStart > this.currentEnd || targetEnd < this.currentStart) {
             for (let i = 0; i < this.poolSize; i++) {
                 const el = this.pool[(this.poolStart + i) % this.poolSize]
                 this.updateItemContent(el, targetStart + i, this.itemHeight)
             }
+            this.currentStart = targetStart
         } else {
             // Sliding window approach
-            while (this.startIndex < targetStart) {
+            while (this.currentStart < targetStart) {
                 const el = this.pool[this.poolStart]
                 this.poolStart = (this.poolStart + 1) % this.poolSize
-                this.startIndex++
-                this.updateItemContent(el, this.endIndex, this.itemHeight)
+                this.currentStart++
+                this.updateItemContent(el, this.currentEnd, this.itemHeight)
             }
 
-            while (this.startIndex > targetStart) {
+            while (this.currentStart > targetStart) {
                 this.poolStart = (this.poolStart - 1 + this.poolSize) % this.poolSize
                 const el = this.pool[this.poolStart]
-                this.startIndex--
-                this.updateItemContent(el, this.startIndex, this.itemHeight)
+                this.currentStart--
+                this.updateItemContent(el, this.currentStart, this.itemHeight)
             }
         }
-        console.log(`Start index: ${this.startIndex}`)
+        console.log(`Start index: ${this.currentStart}`)
         console.log(`Pool start: ${this.poolStart}`)
     }
 
@@ -134,7 +135,7 @@ export class VirtualScroll {
         }
     }
 
-    get endIndex() {
-        return this.startIndex + this.poolSize - 1;
+    get currentEnd() {
+        return this.currentStart + this.poolSize - 1;
     }
 }
