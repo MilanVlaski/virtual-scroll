@@ -16,7 +16,6 @@ export class VirtualScroll {
 
         this.pool = []
         this.poolStart = 0
-        this.visibleCount = 0
         this.poolSize = 0
 
         // Our elements index
@@ -37,8 +36,8 @@ export class VirtualScroll {
         // Too heavy handed
         this.itemsContainer.innerHTML = ''
 
-        this.visibleCount = Math.ceil(containerHeight / this.itemHeight)
-        this.poolSize = this.visibleCount + (this.buffer * 2)
+        const visibleCount = Math.ceil(containerHeight / this.itemHeight)
+        this.poolSize = visibleCount + (this.buffer * 2)
 
         this.currentMin = 0
         this.poolStart = 0
@@ -123,6 +122,7 @@ export class VirtualScroll {
                 this.updateItemContent(el, this.currentStart, this.itemHeight)
             }
         }
+        // Demonstrates circular buffer in action
         console.log(`Start index: ${this.currentStart}`)
         console.log(`Pool start: ${this.poolStart}`)
     }
