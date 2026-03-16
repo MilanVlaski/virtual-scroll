@@ -17,7 +17,6 @@ export class VirtualScroll {
         this.pool = []
         // Our circular buffer index
         this.currentMin = 0
-        this.currentMax = 0
 
         this.poolStart = 0
         this.visibleCount = 0
@@ -39,7 +38,6 @@ export class VirtualScroll {
         this.poolSize = this.visibleCount + (this.buffer * 2)
 
         this.currentMin = 0
-        this.currentMax = this.poolSize - 1
         this.poolStart = 0
 
         this.initializeItems()
@@ -109,7 +107,6 @@ export class VirtualScroll {
                 const el = this.pool[this.poolStart]
                 this.poolStart = (this.poolStart + 1) % this.poolSize
                 this.currentMin++
-                this.currentMax++
                 this.updateItemContent(el, this.currentMax, this.itemHeight)
             }
 
@@ -117,7 +114,6 @@ export class VirtualScroll {
                 this.poolStart = (this.poolStart - 1 + this.poolSize) % this.poolSize
                 const el = this.pool[this.poolStart]
                 this.currentMin--
-                this.currentMax--
                 this.updateItemContent(el, this.currentMin, this.itemHeight)
             }
         }
@@ -131,5 +127,7 @@ export class VirtualScroll {
         }
     }
 
-
+    get currentMax() {
+        return this.currentMin + this.poolSize - 1;
+    }
 }
