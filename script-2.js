@@ -53,5 +53,5 @@ const vs = new VirtualScroll({
     }
 })
 
-vs.initialize()
+vs.setHeight(container.clientHeight)
 

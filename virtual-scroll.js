@@ -31,13 +31,13 @@ export class VirtualScroll {
     /**
      * Resets the pool and recalculates visible items based on container height.
      */
-    initialize() {
+    setHeight(containerHeight) {
         // This resets, initializes, and scrolls. Not great.
         this.pool.length = 0 
         // Too heavy handed
         this.itemsContainer.innerHTML = ''
 
-        this.visibleCount = Math.ceil(this.container.clientHeight / this.itemHeight)
+        this.visibleCount = Math.ceil(containerHeight / this.itemHeight)
         this.poolSize = this.visibleCount + (this.buffer * 2)
 
         this.currentMin = 0
@@ -81,7 +81,7 @@ export class VirtualScroll {
 
         const debouncedResize = this.debounce(() => {
             console.log('Resize detected, re-initializing pool...')
-            this.initialize()
+            this.setHeight(this.container.clientHeight)
         }, 150)
 
         this.resizeObserver = new ResizeObserver(() => {
