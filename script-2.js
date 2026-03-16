@@ -1,3 +1,4 @@
+import { ScrollController } from './scroll-controller.js';
 import { VirtualScroll } from './virtual-scroll.js';
 
 // --- Usage --- //
@@ -36,7 +37,10 @@ function updateItemContent(el, index, itemHeight) {
     el._subtitleEl.textContent = `High-performance virtual entry ${index * 7}ms offset`
 }
 
-// Instantiate the virtual scroll
+const onScroll = (scrollTop) => {
+    // scrollYDisplay.textContent = Math.floor(scrollTop)
+}
+
 const vs = new VirtualScroll({
     container,
     itemsContainer,
@@ -45,13 +49,14 @@ const vs = new VirtualScroll({
     buffer: 0,
     createItem,
     updateItemContent,
-    onScroll: (scrollTop) => {
-        // scrollYDisplay.textContent = Math.floor(scrollTop)
-    },
     onPoolUpdate: (poolSize) => {
         // elementCountDisplay.textContent = poolSize
     }
 })
 
-vs.setHeight(container.clientHeight)
+const controller = new ScrollController(
+    { virtualScroll: vs, container, onScroll }
+)
+
+controller.start()
 
