@@ -11,20 +11,13 @@ export class VirtualScroll {
         this.buffer = config.buffer || 0
         this.createItem = config.createItem
         this.updateItemContent = config.updateItemContent
-        this.onScroll = config.onScroll
         this.onPoolUpdate = config.onPoolUpdate
 
         this.pool = []
         this.poolStart = 0
         this.poolSize = 0
 
-        // Our elements index
         this.currentStart = 0
-
-
-        this.ticking = false
-
-        this.setupEventListeners()
     }
 
     /**
@@ -59,33 +52,6 @@ export class VirtualScroll {
             this.itemsContainer.appendChild(itemEl)
             this.pool.push(itemEl)
         }
-    }
-
-    /**
-     * Sets up scroll and resize listeners.
-     */
-    setupEventListeners() {
-        this.container.addEventListener('scroll', () => {
-            if (this.onScroll) this.onScroll()
-
-            if (!this.ticking) {
-                window.requestAnimationFrame(() => {
-                    this.handleScroll()
-                    this.ticking = false
-                })
-                this.ticking = true
-            }
-        })
-
-        const debouncedResize = this.debounce(() => {
-            console.log('Resize detected, re-initializing pool...')
-            this.setHeight(this.container.clientHeight)
-        }, 150)
-
-        this.resizeObserver = new ResizeObserver(() => {
-            debouncedResize()
-        })
-        this.resizeObserver.observe(this.container)
     }
 
     /**
@@ -125,14 +91,6 @@ export class VirtualScroll {
         // Demonstrates circular buffer in action
         console.log(`Start index: ${this.currentStart}`)
         console.log(`Pool start: ${this.poolStart}`)
-    }
-
-    debounce(func, wait) {
-        let timeout
-        return (...args) => {
-            clearTimeout(timeout)
-            timeout = setTimeout(() => func.apply(this, args), wait)
-        }
     }
 
     get currentEnd() {
