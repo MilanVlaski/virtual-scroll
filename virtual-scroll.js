@@ -55,6 +55,7 @@ export class VirtualScroll {
      */
     initializeItems() {
         for (let i = 0; i < this.poolSize; i++) {
+            if (this.pool.length > i) continue
             const itemEl = this.createItem()
             this.updateItemContent(itemEl, i, this.itemHeight)
             this.itemsContainer.appendChild(itemEl)
