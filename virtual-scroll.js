@@ -45,7 +45,7 @@ export class VirtualScroll {
 
         this.initializeItems()
         if (this.onPoolUpdate) this.onPoolUpdate(this.pool.length)
-        this.handleScroll(this.container.scrollTop)
+        this.handleScroll()
     }
 
     /**
@@ -66,11 +66,11 @@ export class VirtualScroll {
      */
     setupEventListeners() {
         this.container.addEventListener('scroll', () => {
-            if (this.onScroll) this.onScroll(this.container.scrollTop)
+            if (this.onScroll) this.onScroll()
 
             if (!this.ticking) {
                 window.requestAnimationFrame(() => {
-                    this.handleScroll(this.container.scrollTop)
+                    this.handleScroll()
                     this.ticking = false
                 })
                 this.ticking = true
@@ -92,7 +92,8 @@ export class VirtualScroll {
      * Core recycling logic. Determines which items should be visible
      * and moves elements from the pool to their new positions.
      */
-    handleScroll(scrollTop) {
+    handleScroll() {
+        const scrollTop = this.container.scrollTop
         const targetStart = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.buffer)
         const targetEnd = Math.min(this.totalItems - 1, targetStart + this.poolSize - 1)
 
