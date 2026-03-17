@@ -9,7 +9,7 @@ export class ScrollController {
         this.ticking = false
 
         this.container.addEventListener('scroll', () => {
-            
+
             if (!this.ticking) {
                 window.requestAnimationFrame(() => {
                     this.virtualScroll.handleScroll()
@@ -18,7 +18,7 @@ export class ScrollController {
                 })
                 this.ticking = true
             }
-        })
+        }, { passive: true })
 
         const debouncedResize = debounce(() => {
             this.virtualScroll.setHeight(this.container.clientHeight)

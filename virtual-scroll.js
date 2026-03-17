@@ -25,7 +25,7 @@ export class VirtualScroll {
      */
     setHeight(containerHeight) {
         // This resets, initializes, and scrolls. Not great.
-        this.pool.length = 0 
+        this.pool.length = 0
         // Too heavy handed
         this.itemsContainer.innerHTML = ''
 
