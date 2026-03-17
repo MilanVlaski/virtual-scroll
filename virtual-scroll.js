@@ -24,20 +24,31 @@ export class VirtualScroll {
      * Resets the pool and recalculates visible items based on container height.
      */
     setHeight(containerHeight) {
-        // This resets, initializes, and scrolls. Not great.
-        this.pool.length = 0
-        // Too heavy handed
-        this.itemsContainer.innerHTML = ''
+        const newSize = Math.ceil(containerHeight / this.itemHeight) + (this.buffer * 2)
 
-        const visibleCount = Math.ceil(containerHeight / this.itemHeight)
-        this.poolSize = visibleCount + (this.buffer * 2)
+        // 1. Differential DOM updates (no innerHTML = '')
+        while (this.pool.length < newSize) {
+            const el = this.createItem()
+            this.itemsContainer.appendChild(el)
+            this.pool.push(el)
+        }
+        while (this.pool.length > newSize) {
+            this.pool.pop().remove()
+        }
 
+        // 2. Refresh state
+        this.poolSize = newSize
         this.poolStart = 0
 
-        this.currentStart = 0
+        // 3. Immediate sync
+        // Calculate the starting index based on current scroll position
+        const start = Math.max(0, Math.floor(this.container.scrollTop / this.itemHeight) - this.buffer)
 
-        this.initializeItems()
-        this.handleScroll()
+        this.pool.forEach((el, i) => {
+            this.updateItemContent(el, start + i, this.itemHeight)
+        })
+
+        this.currentStart = start
     }
 
     /**

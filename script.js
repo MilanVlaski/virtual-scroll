@@ -57,3 +57,7 @@ const controller = new ScrollController(
 )
 
 controller.start()
+
+
+// Allows us to use vs.setHeight(100) in the console!
+window.vs = vs
