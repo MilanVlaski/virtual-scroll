@@ -28,9 +28,8 @@ function createItem() {
     return itemEl
 }
 
-function updateItemContent(el, index, itemHeight) {
+function updateItemContent(el, index) {
     el.dataset.index = index
-    el.style.transform = `translateY(${index * itemHeight}px)`
 
     el._indexEl.textContent = index
     el._titleEl.textContent = `Product #${index + 1}`

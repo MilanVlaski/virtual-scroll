@@ -45,7 +45,8 @@ export class VirtualScroll {
         const start = Math.max(0, Math.floor(this.container.scrollTop / this.itemHeight) - this.buffer)
 
         this.pool.forEach((el, i) => {
-            this.updateItemContent(el, start + i, this.itemHeight)
+            this.updateItemContent(el, start + i)
+            this.translateElement(el, start + i)
         })
 
         this.currentStart = start
@@ -58,7 +59,8 @@ export class VirtualScroll {
         for (let i = 0; i < this.poolSize; i++) {
             if (this.pool.length > i) continue
             const itemEl = this.createItem()
-            this.updateItemContent(itemEl, i, this.itemHeight)
+            this.updateItemContent(itemEl, i)
+            this.translateElement(itemEl, i)
             this.itemsContainer.appendChild(itemEl)
             this.pool.push(itemEl)
         }
@@ -79,7 +81,8 @@ export class VirtualScroll {
         if (targetStart > this.currentEnd || targetEnd < this.currentStart) {
             for (let i = 0; i < this.poolSize; i++) {
                 const el = this.pool[(this.poolStart + i) % this.poolSize]
-                this.updateItemContent(el, targetStart + i, this.itemHeight)
+                this.updateItemContent(el, targetStart + i)
+                this.translateElement(itemEl, targetStart + i)
             }
             this.currentStart = targetStart
         } else {
@@ -88,19 +91,25 @@ export class VirtualScroll {
                 const el = this.pool[this.poolStart]
                 this.poolStart = (this.poolStart + 1) % this.poolSize
                 this.currentStart++
-                this.updateItemContent(el, this.currentEnd, this.itemHeight)
+                this.updateItemContent(el, this.currentEnd)
+                this.translateElement(itemEl, this.currentEnd)
             }
 
             while (this.currentStart > targetStart) {
                 this.poolStart = (this.poolStart - 1 + this.poolSize) % this.poolSize
                 const el = this.pool[this.poolStart]
                 this.currentStart--
-                this.updateItemContent(el, this.currentStart, this.itemHeight)
+                this.updateItemContent(el, this.currentStart)
+                this.translateElement(itemEl, this.currentStart)
             }
         }
         // Demonstrates circular buffer in action
         console.log(`Start index: ${this.currentStart}`)
         console.log(`Pool start: ${this.poolStart}`)
+    }
+
+    translateElement(itemEl, index) {
+        itemEl.style.transform = `translateY(${index * this.itemHeight}px)`
     }
 
     get currentEnd() {
