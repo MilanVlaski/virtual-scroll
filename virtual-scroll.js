@@ -82,7 +82,7 @@ export class VirtualScroll {
             for (let i = 0; i < this.poolSize; i++) {
                 const el = this.pool[(this.poolStart + i) % this.poolSize]
                 this.updateItemContent(el, targetStart + i)
-                this.translateElement(itemEl, targetStart + i)
+                this.translateElement(el, targetStart + i)
             }
             this.currentStart = targetStart
         } else {
@@ -92,7 +92,7 @@ export class VirtualScroll {
                 this.poolStart = (this.poolStart + 1) % this.poolSize
                 this.currentStart++
                 this.updateItemContent(el, this.currentEnd)
-                this.translateElement(itemEl, this.currentEnd)
+                this.translateElement(el, this.currentEnd)
             }
 
             while (this.currentStart > targetStart) {
@@ -100,7 +100,7 @@ export class VirtualScroll {
                 const el = this.pool[this.poolStart]
                 this.currentStart--
                 this.updateItemContent(el, this.currentStart)
-                this.translateElement(itemEl, this.currentStart)
+                this.translateElement(el, this.currentStart)
             }
         }
         // Demonstrates circular buffer in action
