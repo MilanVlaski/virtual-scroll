@@ -18,6 +18,8 @@ export class VirtualScroll {
         this.poolSize = 0
 
         this.currentStart = 0
+
+        this.offsetTop = 150
     }
 
     /**
@@ -71,8 +73,7 @@ export class VirtualScroll {
      * and moves elements from the pool to their new positions.
      */
     handleScroll() {
-        const scrollTop = this.container.scrollTop
-        const targetStart = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.buffer)
+        const targetStart = Math.max(0, Math.floor(this.container.scrollTop / this.itemHeight) - this.buffer)
         const targetEnd = Math.min(this.totalItems - 1, targetStart + this.poolSize - 1)
 
         if (targetStart === this.currentStart) return
@@ -109,7 +110,7 @@ export class VirtualScroll {
     }
 
     translateElement(itemEl, index) {
-        itemEl.style.transform = `translateY(${index * this.itemHeight}px)`
+        itemEl.style.transform = `translateY(${index * this.itemHeight + this.offsetTop}px)`
     }
 
     get currentEnd() {
