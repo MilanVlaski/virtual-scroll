@@ -1,12 +1,9 @@
 import { ScrollController } from './scroll-controller.js';
 import { VirtualScroll } from './virtual-scroll.js';
 
-// --- Usage --- //
-
 const container = document.getElementById('scroll-container')
 const itemsContainer = document.getElementById('list-items-container')
 const scrollYDisplay = document.getElementById('scroll-y')
-const elementCountDisplay = document.getElementById('element-count')
 
 const ITEM_HEIGHT = parseInt(getComputedStyle(document.documentElement)
     .getPropertyValue('--item-height'))
@@ -40,7 +37,7 @@ const onScroll = (scrollTop) => {
     scrollYDisplay.textContent = Math.floor(scrollTop)
 }
 
-// Instantiate the virtual scroll
+// Attach header of ITEM_HEIGHT, so items start below it
 const vs = new VirtualScroll({
     container,
     itemsContainer,
@@ -49,6 +46,7 @@ const vs = new VirtualScroll({
     buffer: 0,
     createItem,
     updateItemContent,
+    offsetTop: ITEM_HEIGHT  // Offset by the header height
 })
 
 const controller = new ScrollController(
@@ -57,6 +55,4 @@ const controller = new ScrollController(
 
 controller.start()
 
-
-// Allows us to use vs.setHeight(100) in the console!
 window.vs = vs
