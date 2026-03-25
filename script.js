@@ -49,6 +49,7 @@ const vs = new VirtualScroll({
     buffer: 0,
     createItem,
     updateItemContent,
+    offsetTop: 150
 })
 
 const controller = new ScrollController(

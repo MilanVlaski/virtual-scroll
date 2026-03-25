@@ -18,7 +18,7 @@ export class VirtualScroll {
 
         this.currentStart = 0
 
-        this.offsetTop = 150
+        this.offsetTop = config.offsetTop || 0
     }
 
     /**
