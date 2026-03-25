@@ -12,7 +12,7 @@ export class ScrollController {
 
             if (!this.ticking) {
                 window.requestAnimationFrame(() => {
-                    this.virtualScroll.handleScroll()
+                    this.virtualScroll.handleScroll(this.container.scrollTop)
                     this.onScroll(this.container.scrollTop)
                     this.ticking = false
                 })
@@ -21,7 +21,7 @@ export class ScrollController {
         }, { passive: true })
 
         const debouncedResize = debounce(() => {
-            this.virtualScroll.setHeight(this.container.clientHeight)
+            this.virtualScroll.setHeight(this.container.clientHeight, this.container.scrollTop)
         }, 150)
 
         this.resizeObserver = new ResizeObserver(() => {
@@ -31,7 +31,7 @@ export class ScrollController {
     }
 
     start() {
-        this.virtualScroll.setHeight(this.container.clientHeight)
+        this.virtualScroll.setHeight(this.container.clientHeight, this.container.scrollTop)
     }
 }
 

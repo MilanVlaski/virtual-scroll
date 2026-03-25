@@ -1,4 +1,4 @@
-- [ ] Move scrollTop outside, which removes the need for container
+- [x] Move scrollTop outside, which removes the need for container
 - [ ] Stateful items?
 - [ ] getkey (else x => x.id) as constructor parameter
 - [ ] filter, sort causing reorder

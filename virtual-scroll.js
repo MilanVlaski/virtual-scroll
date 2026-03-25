@@ -4,8 +4,6 @@
  */
 export class VirtualScroll {
     constructor(config) {
-        this.container = config.container // delete
-
         this.itemsContainer = config.itemsContainer
         this.itemHeight = config.itemHeight
         this.totalItems = config.totalItems
@@ -26,7 +24,7 @@ export class VirtualScroll {
     /**
      * Resets the pool and recalculates visible items based on container height.
      */
-    setHeight(containerHeight) {
+    setHeight(containerHeight, scrollTop) {
         const newSize = Math.ceil(containerHeight / this.itemHeight) + (this.buffer * 2)
 
         // 1. Differential DOM updates (no innerHTML = '')
@@ -45,7 +43,7 @@ export class VirtualScroll {
 
         // 3. Immediate sync
         // Calculate the starting index based on current scroll position
-        const start = Math.max(0, Math.floor(this.container.scrollTop / this.itemHeight) - this.buffer)
+        const start = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.buffer)
 
         this.pool.forEach((el, i) => {
             this.updateItemContent(el, start + i)
@@ -73,9 +71,9 @@ export class VirtualScroll {
      * Core recycling logic. Determines which items should be visible
      * and moves elements from the pool to their new positions.
      */
-    handleScroll() {
+    handleScroll(scrollTop) {
         // pass scrollTop here
-        const targetStart = Math.max(0, Math.floor(this.container.scrollTop / this.itemHeight) - this.buffer)
+        const targetStart = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.buffer)
         const targetEnd = Math.min(this.totalItems - 1, targetStart + this.poolSize - 1)
 
         if (targetStart === this.currentStart) return
