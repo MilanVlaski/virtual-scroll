@@ -4,14 +4,15 @@
  */
 export class VirtualScroll {
     constructor(config) {
-        this.container = config.container
+        this.container = config.container // delete
+
         this.itemsContainer = config.itemsContainer
         this.itemHeight = config.itemHeight
         this.totalItems = config.totalItems
         this.buffer = config.buffer || 0
+
         this.createItem = config.createItem
         this.updateItemContent = config.updateItemContent
-        this.onPoolUpdate = config.onPoolUpdate
 
         this.pool = []
         this.poolStart = 0
@@ -73,6 +74,7 @@ export class VirtualScroll {
      * and moves elements from the pool to their new positions.
      */
     handleScroll() {
+        // pass scrollTop here
         const targetStart = Math.max(0, Math.floor(this.container.scrollTop / this.itemHeight) - this.buffer)
         const targetEnd = Math.min(this.totalItems - 1, targetStart + this.poolSize - 1)
 

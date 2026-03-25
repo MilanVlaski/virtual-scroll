@@ -1,2 +1,5 @@
-- [ ] Padding top (for a header, for example, a table header). `display: contents;`, 
-- [ ] 
+- [ ] Move scrollTop outside, which removes the need for container
+- [ ] Stateful items?
+- [ ] getkey (else x => x.id) as constructor parameter
+- [ ] filter, sort causing reorder
+- [ ] Logs showing relative time. Useful.
