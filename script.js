@@ -17,6 +17,7 @@ const items = Array.from({ length: TOTAL_ITEMS }, (_, i) => ({
     id: i,
     title: `Product #${i + 1}`,
     subtitle: `High-performance virtual entry ${i * 7}ms offset`,
+    favorite: false,
 }))
 
 function createItem() {
@@ -27,9 +28,11 @@ function createItem() {
         <div class="item-content">
             <div class="item-title"></div>
             <div class="item-subtitle"></div>
+            <label class="item-favorite"><input type="checkbox"> Favorite</label>
         </div>
     `
     itemEl._indexEl = itemEl.querySelector('.item-index')
+    itemEl._checkboxEl = itemEl.querySelector('input[type="checkbox"]')
     itemEl._titleEl = itemEl.querySelector('.item-title')
     itemEl._subtitleEl = itemEl.querySelector('.item-subtitle')
     return itemEl
@@ -37,6 +40,8 @@ function createItem() {
 
 function updateItemContent(el, item) {
     el.dataset.index = item.id
+
+    el._checkboxEl.checked = item.favorite
 
     el._indexEl.textContent = item.id
     el._titleEl.textContent = item.title
@@ -46,6 +51,18 @@ function updateItemContent(el, item) {
 const onScroll = (scrollTop) => {
     scrollYDisplay.textContent = Math.floor(scrollTop)
 }
+
+// Track checkbox interactions globally
+document.addEventListener('change', (e) => {
+    if (e.target.matches('input[type="checkbox"]')) {
+        const itemEl = e.target.closest('.list-item')
+        const itemId = parseInt(itemEl.dataset.index, 10)
+        const item = items.find(x => x.id === itemId)
+        if (item) {
+            item.favorite = e.target.checked
+        }
+    }
+})
 
 // Instantiate the virtual scroll
 const vs = new VirtualScroll({
