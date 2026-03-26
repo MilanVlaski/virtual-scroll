@@ -9,6 +9,12 @@ const ITEM_HEIGHT = parseInt(getComputedStyle(document.documentElement)
     .getPropertyValue('--item-height'))
 const TOTAL_ITEMS = 10000
 
+const items = Array.from({ length: TOTAL_ITEMS }, (_, i) => ({
+    id: i,
+    title: `Product #${i + 1}`,
+    subtitle: `High-performance virtual entry ${i * 7}ms offset`,
+}))
+
 function createItem() {
     const itemEl = document.createElement('div')
     itemEl.className = 'list-item'
@@ -25,12 +31,12 @@ function createItem() {
     return itemEl
 }
 
-function updateItemContent(el, index) {
-    el.dataset.index = index
+function updateItemContent(el, item) {
+    el.dataset.index = item.id
 
-    el._indexEl.textContent = index
-    el._titleEl.textContent = `Product #${index + 1}`
-    el._subtitleEl.textContent = `High-performance virtual entry ${index * 7}ms offset`
+    el._indexEl.textContent = item.id
+    el._titleEl.textContent = item.title
+    el._subtitleEl.textContent = item.subtitle
 }
 
 const onScroll = (scrollTop) => {
@@ -39,10 +45,10 @@ const onScroll = (scrollTop) => {
 
 // Attach header of ITEM_HEIGHT, so items start below it
 const vs = new VirtualScroll({
-    container,
     itemsContainer,
     itemHeight: ITEM_HEIGHT,
-    totalItems: TOTAL_ITEMS,
+    items,
+    keyField: (x => x.id),
     buffer: 0,
     createItem,
     updateItemContent,

@@ -1,24 +1,31 @@
 /**
  * VirtualScroll class encapsulates the logic for high-performance scrolling
- * of large lists by recycling a pool of DOM elements.
+ * of large lists by recycling a pool of DOM elements using identity-aware reconciliation.
  */
 export class VirtualScroll {
     constructor(config) {
         this.itemsContainer = config.itemsContainer
         this.itemHeight = config.itemHeight
-        this.totalItems = config.totalItems
+        this.items = config.items
         this.buffer = config.buffer || 0
+        this.offsetTop = config.offsetTop || 0
 
         this.createItem = config.createItem
         this.updateItemContent = config.updateItemContent
 
-        this.pool = []
-        this.poolStart = 0
+        // Key function: accepts string (field name) or function
+        this.getKey = config.getKey || (item => item['id'])
+
+        // domPool: Map<key, HTMLElement> — currently rendered elements
+        this.domPool = new Map()
+        // unusedPool: Array<HTMLElement> — recycled elements ready for reuse
+        this.unusedPool = []
+
         this.poolSize = 0
+    }
 
-        this.currentStart = 0
-
-        this.offsetTop = config.offsetTop || 0
+    get totalItems() {
+        return this.items ? this.items.length : 0
     }
 
     /**
@@ -27,93 +34,110 @@ export class VirtualScroll {
     setHeight(containerHeight, scrollTop) {
         const newSize = Math.ceil(containerHeight / this.itemHeight) + (this.buffer * 2)
 
-        // 1. Differential DOM updates (no innerHTML = '')
-        while (this.pool.length < newSize) {
+        // 1. Grow unusedPool if needed (elements will be created on demand)
+        while (this.unusedPool.length < newSize) {
             const el = this.createItem()
-            this.itemsContainer.appendChild(el)
-            this.pool.push(el)
-        }
-        while (this.pool.length > newSize) {
-            this.pool.pop().remove()
+            el.style.display = 'none'
+            this.unusedPool.push(el)
         }
 
-        // 2. Refresh state
-        this.poolSize = newSize
-        this.poolStart = 0
+        // 2. Shrink unusedPool if too large
+        while (this.unusedPool.length > newSize) {
+            this.unusedPool.pop().remove()
+        }
 
-        // 3. Immediate sync
-        // Calculate the starting index based on current scroll position
-        const start = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.buffer)
-
-        this.pool.forEach((el, i) => {
-            this.updateItemContent(el, start + i)
-            this.translateElement(el, start + i)
+        // 3. Clear domPool — will be repopulated on next scroll
+        this.domPool.forEach(el => {
+            el.style.display = 'none'
+            this.unusedPool.push(el)
         })
+        this.domPool.clear()
 
-        this.currentStart = start
+        // 4. Update pool size
+        this.poolSize = newSize
+
+        // 5. Immediate render
+        const start = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.buffer)
+        this.renderRange(start, start + this.poolSize)
     }
 
     /**
-     * Populates the pool with initial items.
+     * Render a range of items, mounting them to the DOM.
      */
-    initializeItems() {
-        for (let i = 0; i < this.poolSize; i++) {
-            if (this.pool.length > i) continue
-            const itemEl = this.createItem()
-            this.updateItemContent(itemEl, i)
-            this.translateElement(itemEl, i)
-            this.itemsContainer.appendChild(itemEl)
-            this.pool.push(itemEl)
+    renderRange(start, end) {
+        const clampedEnd = Math.min(this.totalItems, end)
+
+        for (let i = start; i < clampedEnd; i++) {
+            const item = this.items[i]
+            const key = this.getKey(item)
+
+            // Check if already in domPool
+            if (this.domPool.has(key)) {
+                const el = this.domPool.get(key)
+                this.translateElement(el, i)
+                el.style.display = ''
+                continue
+            }
+
+            // Get element from unusedPool or create new
+            const el = this.unusedPool.pop() || this.createItem()
+            this.itemsContainer.appendChild(el)
+
+            // Update content with full item object
+            this.updateItemContent(el, item)
+            this.translateElement(el, i)
+            el.style.display = ''
+
+            this.domPool.set(key, el)
         }
     }
 
     /**
-     * Core recycling logic. Determines which items should be visible
-     * and moves elements from the pool to their new positions.
+     * Core reconciliation logic: diff current visible items vs new visible range.
      */
     handleScroll(scrollTop) {
-        // pass scrollTop here
         const targetStart = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.buffer)
-        const targetEnd = Math.min(this.totalItems - 1, targetStart + this.poolSize - 1)
+        const targetEnd = Math.min(this.totalItems, targetStart + this.poolSize)
 
-        if (targetStart === this.currentStart) return
+        // Build Set of keys that should be visible
+        const visibleKeys = new Set()
+        for (let i = targetStart; i < targetEnd; i++) {
+            visibleKeys.add(this.getKey(this.items[i]))
+        }
 
-        // If we jumped completely outside the current range
-        if (targetStart > this.currentEnd || targetEnd < this.currentStart) {
-            for (let i = 0; i < this.poolSize; i++) {
-                const el = this.pool[(this.poolStart + i) % this.poolSize]
-                this.updateItemContent(el, targetStart + i)
-                this.translateElement(el, targetStart + i)
-            }
-            this.currentStart = targetStart
-        } else {
-            // Sliding window approach
-            while (this.currentStart < targetStart) {
-                const el = this.pool[this.poolStart]
-                this.poolStart = (this.poolStart + 1) % this.poolSize
-                this.currentStart++
-                this.updateItemContent(el, this.currentEnd)
-                this.translateElement(el, this.currentEnd)
-            }
-
-            while (this.currentStart > targetStart) {
-                this.poolStart = (this.poolStart - 1 + this.poolSize) % this.poolSize
-                const el = this.pool[this.poolStart]
-                this.currentStart--
-                this.updateItemContent(el, this.currentStart)
-                this.translateElement(el, this.currentStart)
+        // Evict off-screen elements
+        for (const [key, el] of this.domPool) {
+            if (!visibleKeys.has(key)) {
+                el.style.display = 'none'
+                this.unusedPool.push(el)
+                this.domPool.delete(key)
             }
         }
-        // Demonstrates circular buffer in action
-        console.log(`Start index: ${this.currentStart}`)
-        console.log(`Pool start: ${this.poolStart}`)
+
+        // Mount on-screen elements
+        for (let i = targetStart; i < targetEnd; i++) {
+            const item = this.items[i]
+            const key = this.getKey(item)
+
+            if (this.domPool.has(key)) {
+                // Already mounted — just update position
+                const el = this.domPool.get(key)
+                this.translateElement(el, i)
+            } else {
+                // New element needed
+                const el = this.unusedPool.pop() || this.createItem()
+                this.itemsContainer.appendChild(el)
+
+                this.updateItemContent(el, item)
+                this.translateElement(el, i)
+                el.style.display = ''
+
+                this.domPool.set(key, el)
+            }
+        }
     }
 
     translateElement(itemEl, index) {
         itemEl.style.transform = `translateY(${index * this.itemHeight + this.offsetTop}px)`
-    }
-
-    get currentEnd() {
-        return this.currentStart + this.poolSize - 1;
     }
 }
