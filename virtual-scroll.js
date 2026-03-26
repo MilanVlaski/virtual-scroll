@@ -93,6 +93,6 @@ export class VirtualScroll {
     }
 
     translateElement(itemEl, index) {
-        itemEl.style.transform = `translateY(${index * this.itemHeight + this.offsetTop}px)`
+        itemEl.style.transform = `translate3d(0, ${index * this.itemHeight + this.offsetTop}px, 0)`
     }
 }
