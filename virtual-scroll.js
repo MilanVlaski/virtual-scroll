@@ -79,8 +79,8 @@ export class VirtualScroll {
                 continue
             }
 
-            // Get element from unusedPool or create new
-            const el = this.unusedPool.pop() || this.createItem()
+            // Get element from unusedPool
+            const el = this.unusedPool.pop()
             this.itemsContainer.appendChild(el)
 
             // Update content with full item object
@@ -125,7 +125,7 @@ export class VirtualScroll {
                 this.translateElement(el, i)
             } else {
                 // New element needed
-                const el = this.unusedPool.pop() || this.createItem()
+                const el = this.unusedPool.pop()
                 this.itemsContainer.appendChild(el)
 
                 this.updateItemContent(el, item)
