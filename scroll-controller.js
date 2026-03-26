@@ -12,7 +12,7 @@ export class ScrollController {
 
             if (!this.ticking) {
                 window.requestAnimationFrame(() => {
-                    this.virtualScroll.handleScroll(this.container.scrollTop)
+                    this.virtualScroll.update(this.container.scrollTop)
                     this.onScroll(this.container.scrollTop)
                     this.ticking = false
                 })

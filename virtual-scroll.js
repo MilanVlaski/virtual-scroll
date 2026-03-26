@@ -25,84 +25,61 @@ export class VirtualScroll {
     }
 
     get totalItems() {
-        return this.items ? this.items.length : 0
+        return this.items?.length || 0
     }
 
     /**
-     * Resets the pool and recalculates visible items based on container height.
+     * Initialize pool and render visible range.
      */
     setHeight(containerHeight, scrollTop) {
         const newSize = Math.ceil(containerHeight / this.itemHeight) + (this.buffer * 2)
 
-        // 1. Grow unusedPool if needed (elements will be created on demand)
         while (this.unusedPool.length < newSize) {
-            const el = this.createItem()
-            el.style.display = 'none'
-            this.unusedPool.push(el)
+            this.unusedPool.push(this.createItem())
         }
-
-        // 2. Shrink unusedPool if too large
         while (this.unusedPool.length > newSize) {
             this.unusedPool.pop().remove()
         }
 
-        // 3. Clear domPool — will be repopulated on next scroll
+        // Clear domPool - items will be remounted in update()
         this.domPool.forEach(el => {
-            el.style.display = 'none'
             this.unusedPool.push(el)
+            el.style.display = 'none'
         })
         this.domPool.clear()
 
-        // 4. Update pool size
         this.poolSize = newSize
-
-        // 5. Immediate render
-        const start = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.buffer)
-        this.renderRange(start, start + this.poolSize)
+        this.update(scrollTop)
     }
 
     /**
-     * Render a range of items, mounting them to the DOM.
+     * Single unified update: evict off-screen, mount on-screen.
      */
-    renderRange(start, end) {
-        const clampedEnd = Math.min(this.totalItems, end)
+    update(scrollTop) {
+        const start = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.buffer)
+        const end = Math.min(this.totalItems, start + this.poolSize)
 
-        for (let i = start; i < clampedEnd; i++) {
+        // Track which keys should be visible
+        const visibleKeys = new Set()
+
+        // Process visible range
+        for (let i = start; i < end; i++) {
             const item = this.items[i]
             const key = this.getKey(item)
+            visibleKeys.add(key)
 
-            // Check if already in domPool
             if (this.domPool.has(key)) {
-                const el = this.domPool.get(key)
+                // Already mounted — just update position
+                this.translateElement(this.domPool.get(key), i)
+            } else {
+                // Mount new element
+                const el = this.unusedPool.pop() || this.createItem()
+                this.itemsContainer.appendChild(el)
+                this.updateItemContent(el, item)
                 this.translateElement(el, i)
                 el.style.display = ''
-                continue
+                this.domPool.set(key, el)
             }
-
-            // Get element from unusedPool
-            const el = this.unusedPool.pop()
-            this.itemsContainer.appendChild(el)
-
-            // Update content with full item object
-            this.updateItemContent(el, item)
-            this.translateElement(el, i)
-            el.style.display = ''
-
-            this.domPool.set(key, el)
-        }
-    }
-
-    /**
-     * Core reconciliation logic: diff current visible items vs new visible range.
-     */
-    handleScroll(scrollTop) {
-        const targetStart = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.buffer)
-        const targetEnd = Math.min(this.totalItems, targetStart + this.poolSize)
-
-        // Build Set of keys that should be visible
-        const visibleKeys = new Set()
-        for (let i = targetStart; i < targetEnd; i++) {
-            visibleKeys.add(this.getKey(this.items[i]))
         }
 
         // Evict off-screen elements
@@ -111,28 +88,6 @@ export class VirtualScroll {
                 el.style.display = 'none'
                 this.unusedPool.push(el)
                 this.domPool.delete(key)
-            }
-        }
-
-        // Mount on-screen elements
-        for (let i = targetStart; i < targetEnd; i++) {
-            const item = this.items[i]
-            const key = this.getKey(item)
-
-            if (this.domPool.has(key)) {
-                // Already mounted — just update position
-                const el = this.domPool.get(key)
-                this.translateElement(el, i)
-            } else {
-                // New element needed
-                const el = this.unusedPool.pop()
-                this.itemsContainer.appendChild(el)
-
-                this.updateItemContent(el, item)
-                this.translateElement(el, i)
-                el.style.display = ''
-
-                this.domPool.set(key, el)
             }
         }
     }
