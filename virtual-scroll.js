@@ -73,7 +73,8 @@ export class VirtualScroll {
                 this.translateElement(this.domPool.get(key), i)
             } else {
                 // Mount new element
-                const el = this.unusedPool.pop() || this.createItem()
+                // Create item is an edge case. It may happen during super fast scrolling
+                const el = this.unusedPool.pop() || (console.warn('Pool exhausted!'), this.createItem())
                 this.itemsContainer.appendChild(el)
                 this.updateItemContent(el, item)
                 this.translateElement(el, i)
