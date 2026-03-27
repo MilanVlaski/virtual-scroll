@@ -84,3 +84,8 @@ controller.start()
 
 // Allows us to use vs.setHeight(100) in the console!
 window.vs = vs
+
+document.querySelector('[data-action="reverse-items"]').addEventListener('click', (e) => {
+    items.reverse()
+    controller.start()
+})
