@@ -13,11 +13,11 @@
 
 
 # Tests
-- 0 items with whatever height, 0 are rendered
-- 1 items with 0 height, none are rendered
-- 1 items with 1px height, one or none is rendered?
-- 1 items, where height equal to scrollTop, renders one item
-- Render one item on screen. update scrollTop so there's an extra item.
+- [x] 0 items with whatever height, 0 are rendered
+- [x] 1 items with 0 height, none are rendered
+- [x] 1 items with 1px height, one or none is rendered?
+- [x] 1 items, where height equal to scrollTop, renders one item
+- [ ] Render one item on screen. update scrollTop so there's an extra item.
 - Render one item. Update scroll top so that there are 0 items.
 - Modify the items array
   - Remove an item (Remove a visible item from the items array. Verify its element is moved to unusedPool and hidden (display: none).)

@@ -1,8 +1,24 @@
 /**
+ * @typedef {Object} VirtualScrollConfig
+ * @property {HTMLElement} itemsContainer - The DOM element that holds the list items.
+ * @property {number} itemHeight - The fixed height of each row in pixels.
+ * @property {Array<any>} items - The full array of data items to render.
+ * @property {number} [buffer=0] - Number of items to render above/below the viewport.
+ * @property {number} [offsetTop=0] - Vertical offset for the start of the list.
+ * @property {function(): HTMLElement} createItem - Factory function to create a new list item DOM element.
+ * @property {function(HTMLElement, any): void} updateItemContent - Function to bind data to a recycled DOM element.
+ * @property {function(any): string|number} [getKey] - Function to get a unique identifier for an item. Defaults to item.id.
+*/
+
+/**
  * VirtualScroll class encapsulates the logic for high-performance scrolling
  * of large lists by recycling a pool of DOM elements using identity-aware reconciliation.
  */
 export class VirtualScroll {
+    
+    /**
+     * @param {VirtualScrollConfig} config
+     */
     constructor(config) {
         this.itemsContainer = config.itemsContainer
         this.itemHeight = config.itemHeight
