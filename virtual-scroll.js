@@ -24,10 +24,6 @@ export class VirtualScroll {
         this.poolSize = 0
     }
 
-    get totalItems() {
-        return this.items?.length || 0
-    }
-
     /**
      * Initialize pool and render visible range.
      */
@@ -43,7 +39,7 @@ export class VirtualScroll {
      */
     update(scrollTop) {
         const start = Math.max(0, Math.floor(scrollTop / this.itemHeight) - this.buffer)
-        const end = Math.min(this.totalItems, start + this.poolSize)
+        const end = Math.min(this.items.length, start + this.poolSize)
 
         // Track which keys should be visible
 
@@ -74,7 +70,7 @@ export class VirtualScroll {
             } else {
                 // Mount new element
                 // Create item is an edge case. It may happen during super fast scrolling
-                const el = this.unusedPool.pop() || (console.warn('Pool exhausted!'), this.createItem())
+                const el = this.unusedPool.pop() || this.createItem()
                 this.itemsContainer.appendChild(el)
                 this.updateItemContent(el, item)
                 this.translateElement(el, i)
