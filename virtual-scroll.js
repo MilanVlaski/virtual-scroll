@@ -14,10 +14,10 @@ export class VirtualScroll {
         this.updateItemContent = config.updateItemContent
 
         // Key function: accepts string (field name) or function
-        this.getKey = config.getKey || (item => item['id'])
+        this.getKey = config.getKey || (item => item.id)
 
         // domPool: Map<key, HTMLElement> — currently rendered elements
-        this.domPool = new Map()
+        this.idDomMap = new Map()
         // unusedPool: Array<HTMLElement> — recycled elements ready for reuse
         this.unusedPool = []
 
@@ -34,20 +34,6 @@ export class VirtualScroll {
     setHeight(containerHeight, scrollTop) {
         const newSize = Math.ceil(containerHeight / this.itemHeight) + (this.buffer * 2)
 
-        while (this.unusedPool.length < newSize) {
-            this.unusedPool.push(this.createItem())
-        }
-        while (this.unusedPool.length > newSize) {
-            this.unusedPool.pop().remove()
-        }
-
-        // Clear domPool - items will be remounted in update()
-        this.domPool.forEach(el => {
-            this.unusedPool.push(el)
-            el.style.display = 'none'
-        })
-        this.domPool.clear()
-
         this.poolSize = newSize
         this.update(scrollTop)
     }
@@ -60,17 +46,31 @@ export class VirtualScroll {
         const end = Math.min(this.totalItems, start + this.poolSize)
 
         // Track which keys should be visible
-        const visibleKeys = new Set()
 
         // Process visible range
+        const oldDomMap = this.idDomMap
+        this.idDomMap = new Map()
         for (let i = start; i < end; i++) {
             const item = this.items[i]
             const key = this.getKey(item)
-            visibleKeys.add(key)
+            const el = oldDomMap.get(key)
+            if(!el) continue
 
-            if (this.domPool.has(key)) {
+            oldDomMap.delete(key)
+            this.idDomMap.set(key, el)
+        }
+        for(const [key, value] of oldDomMap) {
+            this.unusedPool.push(value)
+        }
+
+        
+        for (let i = start; i < end; i++) {
+            const item = this.items[i]
+            const key = this.getKey(item)
+
+            if (this.idDomMap.has(key)) {
                 // Already mounted — just update position
-                this.translateElement(this.domPool.get(key), i)
+                this.translateElement(this.idDomMap.get(key), i)
             } else {
                 // Mount new element
                 // Create item is an edge case. It may happen during super fast scrolling
@@ -79,21 +79,18 @@ export class VirtualScroll {
                 this.updateItemContent(el, item)
                 this.translateElement(el, i)
                 el.style.display = ''
-                this.domPool.set(key, el)
+                this.idDomMap.set(key, el)
             }
         }
 
         // Evict off-screen elements
-        for (const [key, el] of this.domPool) {
-            if (!visibleKeys.has(key)) {
-                el.style.display = 'none'
-                this.unusedPool.push(el)
-                this.domPool.delete(key)
-            }
+        for (const el in this.unusedPool) {
+            el.style.display = 'none'
         }
     }
 
     translateElement(itemEl, index) {
+        itemEl.vsidx = index
         itemEl.style.transform = `translate3d(0, ${index * this.itemHeight + this.offsetTop}px, 0)`
     }
 }
