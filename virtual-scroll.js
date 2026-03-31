@@ -84,7 +84,7 @@ export class VirtualScroll {
         }
 
         // Evict off-screen elements
-        for (const el in this.unusedPool) {
+        for (const el of this.unusedPool) {
             el.style.display = 'none'
         }
     }
