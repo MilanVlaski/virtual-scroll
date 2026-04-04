@@ -88,7 +88,7 @@ describe('Virtual scroll', () => {
 
     test('with buffer 1, scrolling past the first item keeps it rendered until it exits the buffer', () => {
         vs.buffer = 1
-        vs.setHeight(ITEM_HEIGHT, 0)
+        vs.setHeight(ENOUGH_HEIGHT, 0)
 
         const firstElement = vs.idDomMap.get(items[0].id)
         const secondElement = vs.idDomMap.get(items[1].id)
@@ -97,7 +97,7 @@ describe('Virtual scroll', () => {
         expect(secondElement).toBeAtPosition(1) // Rendered via buffer
 
         // Scroll so item[0] is completely off-screen
-        vs.setHeight(ITEM_HEIGHT, ITEM_HEIGHT)
+        vs.setHeight(ENOUGH_HEIGHT, ITEM_HEIGHT)
 
         // item[0] should still be in DOM because of buffer (top buffer)
         expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
@@ -105,7 +105,7 @@ describe('Virtual scroll', () => {
         expect(vs.unusedPool).toBeEmpty()
 
         // Scroll further so item[0] is beyond the buffer range
-        vs.setHeight(ITEM_HEIGHT, ITEM_HEIGHT * 2)
+        vs.setHeight(ENOUGH_HEIGHT, ITEM_HEIGHT * 2)
 
         // Now item[0] should finally be pooled
         expect(vs.idDomMap.get(items[0].id)).toBeUndefined()
