@@ -31,43 +31,39 @@ describe('Virtual scroll', () => {
 
     test('with 1px container height, first item is rendered at height 0', () => {
         vs.setHeight(1, 0)
-        expect(vs.idDomMap.get(items[0].id)).toBeAtHeight(0)
+        expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
     })
 
-    test('two items render when enough height is added', () => {
+    test('two items render when there is enough height for two items', () => {
         vs.setHeight(1, 0)
-        expect(vs.idDomMap.get(items[0].id)).toBeAtHeight(0)
+        expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
         expect(vs.idDomMap.get(items[1].id)).toBeUndefined() // eh...
 
         vs.setHeight(ITEM_HEIGHT + 1, 0)
-        expect(vs.idDomMap.get(items[0].id)).toBeAtHeight(0)
-        expect(vs.idDomMap.get(items[1].id)).toBeAtHeight(10)
+        const index = 0
+        expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
+        expect(vs.idDomMap.get(items[1].id)).toBeAtPosition(1)
     })
 
-    test('offscreen items move into unusedPool', () => {
+    test('when height shrinks from two items to one, the second item moves into unusedPool', () => {
         vs.setHeight(ITEM_HEIGHT + 1, 0)
-        expect(vs.idDomMap.get(items[0].id)).toBeAtHeight(0)
-        expect(vs.idDomMap.get(items[1].id)).toBeAtHeight(10)
+        expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
+        expect(vs.idDomMap.get(items[1].id)).toBeAtPosition(1)
 
         vs.setHeight(1, 0)
-        expect(vs.idDomMap.get(items[0].id)).toBeAtHeight(0)
-        expect(vs.unusedPool[0]).toBeAtHeight(10)
+        expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
+        expect(vs.unusedPool[0]).toBeAtPosition(1)
     })
 
     const DUMMY_ITEMS_CONTAINER = { appendChild: () => { } }
 
-    // Either this, or we replace usages with toHavePosition, where we check
-    // for the vsidx variable. Or we use both.
     expect.extend({
-        toBeAtHeight(element, expectedHeight) {
-            // x, y, z. [1] because y is second.
-            const actualHeight = element.style.transform.split(',')[1].trim().replace('px', '')
-
-            const pass = actualHeight == expectedHeight
+        toBeAtPosition(element, expectedPosition) {
+            const actualPosition = element.vsidx
 
             return {
-                pass,
-                message: () => `expected translateY to be ${expectedHeight} but got ${actualHeight}`
+                pass: actualPosition == expectedPosition,
+                message: () => `expected id to be ${expectedPosition} but got ${actualPosition}`
             }
         }
     })
