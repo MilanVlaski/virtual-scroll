@@ -70,6 +70,48 @@ describe('Virtual scroll', () => {
         expect(vs.unusedPool[0]).toBe(firstElement)
     })
 
+    test('with buffer 1, shrinking height from two visible items to one still keeps both rendered', () => {
+        vs.buffer = 1
+        // Height for 2 items
+        vs.setHeight(ITEM_HEIGHT * 2, 0)
+        expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
+        expect(vs.idDomMap.get(items[1].id)).toBeAtPosition(1)
+
+        // Shrink height to only fit 1 item
+        vs.setHeight(ITEM_HEIGHT, 0)
+
+        // Both should still exist because item[1] is now in the bottom buffer
+        expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
+        expect(vs.idDomMap.get(items[1].id)).toBeAtPosition(1)
+        expect(vs.unusedPool).toBeEmpty()
+    })
+
+    test('with buffer 1, scrolling past the first item keeps it rendered until it exits the buffer', () => {
+        vs.buffer = 1
+        vs.setHeight(ITEM_HEIGHT, 0)
+
+        const firstElement = vs.idDomMap.get(items[0].id)
+        const secondElement = vs.idDomMap.get(items[1].id)
+
+        expect(firstElement).toBeAtPosition(0)
+        expect(secondElement).toBeAtPosition(1) // Rendered via buffer
+
+        // Scroll so item[0] is completely off-screen
+        vs.setHeight(ITEM_HEIGHT, ITEM_HEIGHT)
+
+        // item[0] should still be in DOM because of buffer (top buffer)
+        expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
+        expect(vs.idDomMap.get(items[1].id)).toBeAtPosition(1)
+        expect(vs.unusedPool).toBeEmpty()
+
+        // Scroll further so item[0] is beyond the buffer range
+        vs.setHeight(ITEM_HEIGHT, ITEM_HEIGHT * 2)
+
+        // Now item[0] should finally be pooled
+        expect(vs.idDomMap.get(items[0].id)).toBeUndefined()
+        expect(vs.unusedPool[0]).toBe(firstElement)
+    })
+
     const DUMMY_ITEMS_CONTAINER = { appendChild: () => { } }
 
     expect.extend({
