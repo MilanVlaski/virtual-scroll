@@ -49,7 +49,7 @@ describe('Virtual scroll', () => {
 
     test('when scrolling from two items to one, the first item moves into unusedPool', () => {
         vs.setHeight(ENOUGH_HEIGHT, 0)
-        
+
         const secondElement = vs.idDomMap.get(items[1].id)
         const firstElement = vs.idDomMap.get(items[0].id)
         expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
@@ -128,6 +128,21 @@ describe('Virtual scroll', () => {
         expect(vs.idDomMap).toBeEmpty()
         expect(vs.unusedPool.length).toBe(2)
     })
+
+    test('removing odd elements moves them to unused pool', () => {
+        vs.setHeight(items.length * ITEM_HEIGHT, 0)
+        
+        const evenItems = removeOdd(items)
+        const oddItems = removeEven(items)
+
+        vs.items = evenItems
+        vs.setHeight(items.length * ITEM_HEIGHT, 0)
+
+        console.log(vs)
+    })
+
+    const removeOdd = arr => arr.splice((_, i) => i % 2 === 0)
+    const removeEven = arr => arr.filter((_, i) => i % 2 !== 0)
 
 
     const DUMMY_ITEMS_CONTAINER = { appendChild: () => { } }
