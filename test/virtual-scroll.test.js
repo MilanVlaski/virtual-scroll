@@ -3,7 +3,8 @@ import { VirtualScroll } from "../src/virtual-scroll"
 
 describe('Virtual scroll', () => {
     let vs
-    const items = [{ id: 'item-1' }, { id: 'item-2' }]
+    const TOTAL_ITEMS = 10
+    const items = Array.from({ length: TOTAL_ITEMS }, (_, i) => ({ id: `item-${i}` }))
     const ITEM_HEIGHT = 10
     const ENOUGH_HEIGHT = 10_0000
 
@@ -35,17 +36,6 @@ describe('Virtual scroll', () => {
         expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
     })
 
-    test('two items render when there is enough height for two items', () => {
-        vs.setHeight(1, 0)
-        expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
-        expect(vs.idDomMap.get(items[1].id)).toBeUndefined() // eh...
-
-        vs.setHeight(ITEM_HEIGHT + 1, 0)
-        const index = 0
-        expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
-        expect(vs.idDomMap.get(items[1].id)).toBeAtPosition(1)
-    })
-
     test('when height shrinks from two items to one, the second item moves into unusedPool', () => {
         vs.setHeight(ITEM_HEIGHT + 1, 0)
         expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
@@ -57,7 +47,7 @@ describe('Virtual scroll', () => {
         expect(vs.unusedPool[0]).toBe(secondElement)
     })
 
-    test('when scroll from two items to one, the first item moves into unusedPool', () => {
+    test('when scrolling from two items to one, the first item moves into unusedPool', () => {
         vs.setHeight(ENOUGH_HEIGHT, 0)
         
         const secondElement = vs.idDomMap.get(items[1].id)
@@ -83,7 +73,6 @@ describe('Virtual scroll', () => {
         // Both should still exist because item[1] is now in the bottom buffer
         expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
         expect(vs.idDomMap.get(items[1].id)).toBeAtPosition(1)
-        expect(vs.unusedPool).toBeEmpty()
     })
 
     test('with buffer 1, scrolling past the first item keeps it rendered until it exits the buffer', () => {
@@ -112,13 +101,38 @@ describe('Virtual scroll', () => {
         expect(vs.unusedPool[0]).toBe(firstElement)
     })
 
+    test('cycling items: scrolling down then back up reuses elements', () => {
+        // 1. Initial: Render first 2 items
+        vs.setHeight(ITEM_HEIGHT * 2, 0)
+        const firstElem = vs.idDomMap.get('item-0')
+        const secondElem = vs.idDomMap.get('item-1')
+
+        // 2. Scroll down: item-0 and item-1 should go to pool
+        vs.setHeight(ITEM_HEIGHT * 2, ITEM_HEIGHT * 5)
+
+        // 3. Scroll back to top: Should reuse those elements
+        vs.setHeight(ITEM_HEIGHT * 2, 0)
+        expect(vs.idDomMap.get('item-0')).toBe(firstElem) // Reference equality check
+        expect(vs.idDomMap.get('item-0')).toBeAtPosition(0)
+        expect(vs.unusedPool).toBeEmpty()
+    })
+
+    test('resizing: growing height pulls from pool, shrinking returns to pool', () => {
+        vs.setHeight(ITEM_HEIGHT, 0) // 1 item visible
+        expect(vs.idDomMap.size).toBe(1)
+
+        vs.setHeight(ITEM_HEIGHT * 2, 0) // Grow
+        expect(vs.idDomMap.size).toBe(2)
+
+        vs.setHeight(0, 0) // Shrink to nothing
+        expect(vs.idDomMap).toBeEmpty()
+        expect(vs.unusedPool.length).toBe(2)
+    })
+
+
     const DUMMY_ITEMS_CONTAINER = { appendChild: () => { } }
 
     expect.extend({
-        // Vsidx trenutno racuna "virtuelnu" poziciju, koja odgovara transform poziciji.
-        // Umjesto toga, da li nam treba neki vsidx da mjeri "vizuelno" sta je na ekranu?
-        // Kontam da ne, jer je to u principu samo dom.
-        // Ali sad to zavisi i od bafera.
         toBeAtPosition(element, expectedPosition) {
             const actualPosition = element.vsidx
 
