@@ -48,11 +48,12 @@ describe('Virtual scroll', () => {
     test('when height shrinks from two items to one, the second item moves into unusedPool', () => {
         vs.setHeight(ITEM_HEIGHT + 1, 0)
         expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
-        expect(vs.idDomMap.get(items[1].id)).toBeAtPosition(1)
+        const secondElement = vs.idDomMap.get(items[1].id)
+        expect(secondElement).toBeAtPosition(1)
 
         vs.setHeight(1, 0)
         expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
-        expect(vs.unusedPool[0]).toBeAtPosition(1)
+        expect(vs.unusedPool[0]).toBe(secondElement)
     })
 
     const DUMMY_ITEMS_CONTAINER = { appendChild: () => { } }
