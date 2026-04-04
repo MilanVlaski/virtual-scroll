@@ -5,6 +5,7 @@ describe('Virtual scroll', () => {
     let vs
     const items = [{ id: 'item-1' }, { id: 'item-2' }]
     const ITEM_HEIGHT = 10
+    const ENOUGH_HEIGHT = 10_0000
 
     beforeEach(() => {
         vs = new VirtualScroll({
@@ -12,7 +13,7 @@ describe('Virtual scroll', () => {
             updateItemContent: () => ({}),
             itemHeight: ITEM_HEIGHT,
             items,
-            itemsContainer: DUMMY_ITEMS_CONTAINER
+            itemsContainer: DUMMY_ITEMS_CONTAINER,
         })
     })
 
@@ -56,9 +57,26 @@ describe('Virtual scroll', () => {
         expect(vs.unusedPool[0]).toBe(secondElement)
     })
 
+    test('when scroll from two items to one, the first item moves into unusedPool', () => {
+        vs.setHeight(ENOUGH_HEIGHT, 0)
+        
+        const secondElement = vs.idDomMap.get(items[1].id)
+        const firstElement = vs.idDomMap.get(items[0].id)
+        expect(vs.idDomMap.get(items[0].id)).toBeAtPosition(0)
+        expect(secondElement).toBeAtPosition(1)
+
+        vs.setHeight(ENOUGH_HEIGHT, ITEM_HEIGHT)
+        expect(vs.idDomMap.get(items[1].id)).toBeAtPosition(1)
+        expect(vs.unusedPool[0]).toBe(firstElement)
+    })
+
     const DUMMY_ITEMS_CONTAINER = { appendChild: () => { } }
 
     expect.extend({
+        // Vsidx trenutno racuna "virtuelnu" poziciju, koja odgovara transform poziciji.
+        // Umjesto toga, da li nam treba neki vsidx da mjeri "vizuelno" sta je na ekranu?
+        // Kontam da ne, jer je to u principu samo dom.
+        // Ali sad to zavisi i od bafera.
         toBeAtPosition(element, expectedPosition) {
             const actualPosition = element.vsidx
 
