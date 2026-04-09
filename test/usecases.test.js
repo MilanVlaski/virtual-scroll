@@ -37,23 +37,31 @@ describe('Virtual scroll', () => {
         })
     })
 
-    xtest('proper reusability of elements', () => {
+    test('proper reusability of elements', () => {
         vs.setHeight(items.length * ITEM_HEIGHT, 0)
+        expect(getVisibleElementsTextContent())
+            .toEqual(['id:0', 'id:1', 'id:2', 'id:3', 'id:4',
+                'id:5', 'id:6', 'id:7', 'id:8', 'id:9',
+            ])
+        // first render calls update once
+        expect(vs.idDomMap.get('0')).wasUpdated(1)
 
+        // remove every second element
         const evens = removeOdd(items)
         vs.items = evens
-
+        
         vs.setHeight(items.length * ITEM_HEIGHT, 0)
 
         expect(getVisibleElementsTextContent())
             .toEqual(['id:0', 'id:2', 'id:4', 'id:6', 'id:8',])
 
-        // we can even store their references?
-        // once we remove the odd ones, we expect the even ones to
-        // stay updates 0 times
-
         // the FIRST element, being even, should not have been updated
-        expect(vs.idDomMap.get(items[0].id)).wasUpdated(0)
+        expect(vs.idDomMap.get('0')).wasUpdated(1)
+
+        vs.items = items
+        vs.setHeight(items.length * ITEM_HEIGHT, 0)
+        expect(vs.idDomMap.get('0')).wasUpdated(1)
+        expect(vs.idDomMap.get('1')).wasUpdated(2)
     })
 
     const removeOdd = arr => arr.filter((_, i) => i % 2 === 0)

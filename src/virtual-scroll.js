@@ -88,6 +88,7 @@ export class VirtualScroll {
                 // Create item is an edge case. It may happen during super fast scrolling
                 const el = this.unusedPool.pop() || this.createItem()
                 el.__key = key
+
                 this.itemsContainer.appendChild(el)
                 this.updateItemContent(el, item)
                 this.translateElement(el, i)
