@@ -39,3 +39,7 @@ Bottom: When at the end of the list, end should strictly be totalItems, and no "
 
 rendered, meaning, it's in the idDomMap
 Check vsidx of items is as expected
+
+- check things on screen
+- check data array, items with same id, reuse elements.
+  - 

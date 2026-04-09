@@ -1,5 +1,6 @@
 import { describe, expect, test, beforeEach } from "bun:test"
 import { VirtualScroll } from "../src/virtual-scroll"
+import { DUMMY_ITEMS_CONTAINER } from "./helpers"
 
 describe('Virtual scroll', () => {
     let vs
@@ -7,6 +8,18 @@ describe('Virtual scroll', () => {
     const items = Array.from({ length: TOTAL_ITEMS }, (_, i) => ({ id: `item-${i}` }))
     const ITEM_HEIGHT = 10
     const ENOUGH_HEIGHT = 10_0000
+
+    const createItem = () => {
+        const $el = document.createElement('div');
+        $el.textContent = ''
+        $el.updateCount = 0
+        return $el
+    }
+
+    const updateItemContent = (element, item) => {
+        element.updateCount++
+        element.textContent = `id:${item.id}`
+    }
 
     beforeEach(() => {
         vs = new VirtualScroll({
@@ -127,34 +140,5 @@ describe('Virtual scroll', () => {
         vs.setHeight(0, 0) // Shrink to nothing
         expect(vs.idDomMap).toBeEmpty()
         expect(vs.unusedPool.length).toBe(2)
-    })
-
-    test('removing odd elements moves them to unused pool', () => {
-        vs.setHeight(items.length * ITEM_HEIGHT, 0)
-        
-        const evenItems = removeOdd(items)
-        const oddItems = removeEven(items)
-
-        vs.items = evenItems
-        vs.setHeight(items.length * ITEM_HEIGHT, 0)
-
-        console.log(vs)
-    })
-
-    const removeOdd = arr => arr.splice((_, i) => i % 2 === 0)
-    const removeEven = arr => arr.filter((_, i) => i % 2 !== 0)
-
-
-    const DUMMY_ITEMS_CONTAINER = { appendChild: () => { } }
-
-    expect.extend({
-        toBeAtPosition(element, expectedPosition) {
-            const actualPosition = element.vsidx
-
-            return {
-                pass: actualPosition == expectedPosition,
-                message: () => `expected id to be ${expectedPosition} but got ${actualPosition}`
-            }
-        }
     })
 })
