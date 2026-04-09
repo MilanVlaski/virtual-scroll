@@ -14,10 +14,10 @@ expect.extend({
 
 // updated X times
 expect.extend({
-    wasUpdated(numberOfUpdates, expected) {
+    wasUpdated(element, expected) {
         return {
-            pass: expected == numberOfUpdates,
-            message: () => `expected element to have been updated ${expected} times but got ${numberOfUpdates}`
+            pass: expected == element.updateCount,
+            message: () => `expected element to have been updated ${expected} times but got ${element.updateCount}`
         }
     }
 })

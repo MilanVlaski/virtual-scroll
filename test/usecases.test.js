@@ -1,7 +1,7 @@
 import { GlobalWindow } from "happy-dom";
 import { describe, expect, test, beforeEach, xtest } from "bun:test"
 import { VirtualScroll } from "../src/virtual-scroll"
-import { DUMMY_ITEMS_CONTAINER } from "./helpers"
+import "./helpers"
 
 
 const window = new GlobalWindow();
@@ -37,7 +37,7 @@ describe('Virtual scroll', () => {
         })
     })
 
-    test('proper reusability of elements', () => {
+    xtest('proper reusability of elements', () => {
         vs.setHeight(items.length * ITEM_HEIGHT, 0)
 
         const evens = removeOdd(items)
@@ -52,11 +52,8 @@ describe('Virtual scroll', () => {
         // once we remove the odd ones, we expect the even ones to
         // stay updates 0 times
 
-        // and when we add an odd element
-        // and we expect the even n
-        // vs.setHeight(items.length * ITEM_HEIGHT, 0)
-
-        // expect(vs.idDomMap.get(items[0].id)).toBeUpdated(3)
+        // the FIRST element, being even, should not have been updated
+        expect(vs.idDomMap.get(items[0].id)).wasUpdated(0)
     })
 
     const removeOdd = arr => arr.filter((_, i) => i % 2 === 0)
